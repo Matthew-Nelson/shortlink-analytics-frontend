@@ -9,27 +9,24 @@ const UrlsIndex = () => {
   useEffect(() => {
     const fetchUrls = async () => {
       try {
-        const response = await axios.get('http://localhost:4000/urls');
-        setUrls(response.data);
-        console.log(response.data);
+        const response = await axios.post('http://localhost:4000/graphql', {
+          query: `
+            query GetUrls {
+              urls {
+                id
+                long_url
+                short_id
+                custom_id
+                created_at
+                updated_at
+              }
+            }
+          `,
+        });
+        setUrls(response.data.data.urls);
       } catch (error) {
-        if (error.response) {
-          console.error('Error response:', error.response.data);
-          console.error('Error status:', error.response.status);
-          console.error('Error headers:', error.response.headers);
-          if (error.response.status === 404) {
-            setError('No URLs found.');
-          } else {
-            setError('Error fetching URLs.');
-          }
-        } else if (error.request) {
-          console.error('Error request:', error.request);
-          setError('No response received from server.');
-        } else {
-          console.error('Error message:', error.message);
-          setError('Error setting up request.');
-        }
-        console.error('Error config:', error.config);
+        console.error('Error fetching URLs:', error.response?.data || error.message);
+        setError('Error fetching URLs.');
       }
     };
 

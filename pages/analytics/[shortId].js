@@ -30,8 +30,26 @@ const Analytics = () => {
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        const response = await axios.get(`http://localhost:4000/analytics/${shortId}`);
-        setClicks(response.data.clicks);
+        const response = await axios.post('http://localhost:4000/graphql', {
+          query: `
+            query GetClicks($shortId: String!) {
+              url(short_id: $shortId) {
+                clicks {
+                  id
+                  timestamp
+                  location
+                  referrer
+                }
+              }
+            }
+          `,
+          variables: {
+            shortId: shortId, // Pass the shortId dynamically
+          },
+        });
+    
+        // Extract the clicks data from the response
+        setClicks(response.data.data.url.clicks);
       } catch (error) {
         console.error('Error fetching analytics:', error);
       }

@@ -9,10 +9,23 @@ const UrlForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:4000/shorten', { long_url: longUrl, custom_id: customId });
-      setShortUrl(response.data.short_url);
+      const response = await axios.post('http://localhost:4000/graphql', {
+        query: `
+          mutation ShortenUrl($long_url: String!, $custom_id: String) {
+            shortenUrl(long_url: $long_url, custom_id: $custom_id) {
+              short_id
+              long_url
+            }
+          }
+        `,
+        variables: {
+          long_url: longUrl,
+          custom_id: customId || null,
+        },
+      });
+      setShortUrl(`http://localhost:4000/${response.data.data.shortenUrl.short_id}`);
     } catch (error) {
-      console.error('Error shortening URL:', error);
+      console.error('Error shortening URL:', error.response?.data || error.message);
     }
   };
 
