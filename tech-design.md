@@ -3,9 +3,11 @@
 ## Overview
 
 ### Project Goal
+
 The goal of this project is to build a URL Shortener application with analytics tracking. The application will allow users to shorten long URLs, track clicks, locations, and referrers, and optionally create custom short links.
 
 ### Tech Stack
+
 - **Frontend**: Next.js
 - **Backend**: Node.js/Express with Apollo Server (GraphQL)
 - **Database**: PostgreSQL with Sequelize ORM
@@ -20,6 +22,7 @@ The goal of this project is to build a URL Shortener application with analytics 
 ## System Architecture
 
 ### High-Level Architecture Diagram
+
 ```
            +---------------------+
            |    User Interface   |
@@ -43,10 +46,12 @@ The goal of this project is to build a URL Shortener application with analytics 
 ### Components
 
 1. **Frontend (Next.js)**
+
    - **Pages**: Home, URL Shortening Form, Analytics Dashboard
    - **Components**: URL Shortening Form, Analytics Chart, Custom Link Input
 
 2. **Backend (Node.js/Express with Apollo Server)**
+
    - **GraphQL Schema**:
      - Queries:
        - `urls`: Fetch all URLs.
@@ -59,6 +64,7 @@ The goal of this project is to build a URL Shortener application with analytics 
      - Handle database interactions and business logic.
 
 3. **Database (PostgreSQL with Sequelize ORM)**
+
    - **Tables**:
      - `urls`: Store original URLs and their shortened versions.
      - `clicks`: Store click analytics (timestamp, location, referrer).
@@ -74,26 +80,26 @@ The goal of this project is to build a URL Shortener application with analytics 
 
 #### `urls`
 
-| Column     | Type         | Description                   |
-|------------|--------------|-------------------------------|
-| id         | SERIAL       | Primary key                   |
-| long_url   | TEXT         | Original long URL             |
-| short_id   | VARCHAR(10)  | Shortened URL identifier      |
-| custom_id  | VARCHAR(10)  | Custom short URL identifier   |
-| created_at | TIMESTAMP    | Timestamp of URL creation     |
-| updated_at | TIMESTAMP    | Timestamp of last update      |
+| Column     | Type        | Description                 |
+| ---------- | ----------- | --------------------------- |
+| id         | SERIAL      | Primary key                 |
+| long_url   | TEXT        | Original long URL           |
+| short_id   | VARCHAR(10) | Shortened URL identifier    |
+| custom_id  | VARCHAR(10) | Custom short URL identifier |
+| created_at | TIMESTAMP   | Timestamp of URL creation   |
+| updated_at | TIMESTAMP   | Timestamp of last update    |
 
 #### `clicks`
 
-| Column     | Type         | Description                   |
-|------------|--------------|-------------------------------|
-| id         | SERIAL       | Primary key                   |
-| url_id     | INTEGER      | Foreign key referencing `urls`|
-| timestamp  | TIMESTAMP    | Timestamp of the click        |
-| location   | VARCHAR(100) | Location of the click         |
-| referrer   | TEXT         | Referrer URL                  |
-| created_at | TIMESTAMP    | Timestamp of record creation  |
-| updated_at | TIMESTAMP    | Timestamp of last update      |
+| Column     | Type         | Description                    |
+| ---------- | ------------ | ------------------------------ |
+| id         | SERIAL       | Primary key                    |
+| url_id     | INTEGER      | Foreign key referencing `urls` |
+| timestamp  | TIMESTAMP    | Timestamp of the click         |
+| location   | VARCHAR(100) | Location of the click          |
+| referrer   | TEXT         | Referrer URL                   |
+| created_at | TIMESTAMP    | Timestamp of record creation   |
+| updated_at | TIMESTAMP    | Timestamp of last update       |
 
 ## API Endpoints
 
@@ -104,6 +110,7 @@ The goal of this project is to build a URL Shortener application with analytics 
 **Description**: Fetch all URLs.
 
 **Response**:
+
 - `urls` (array): List of all URLs.
 
 #### `url(short_id: String!)`
@@ -111,9 +118,11 @@ The goal of this project is to build a URL Shortener application with analytics 
 **Description**: Fetch a single URL by its short ID.
 
 **Request Parameters**:
+
 - `short_id` (string): The shortened URL identifier.
 
 **Response**:
+
 - `url` (object): The URL object.
 
 #### `clicks(url_id: ID!)`
@@ -121,9 +130,11 @@ The goal of this project is to build a URL Shortener application with analytics 
 **Description**: Fetch all clicks for a specific URL.
 
 **Request Parameters**:
+
 - `url_id` (ID): The ID of the URL.
 
 **Response**:
+
 - `clicks` (array): List of click analytics.
 
 ### GraphQL Mutations
@@ -133,23 +144,29 @@ The goal of this project is to build a URL Shortener application with analytics 
 **Description**: Shorten a long URL with an optional custom ID.
 
 **Request Parameters**:
+
 - `long_url` (string): The original long URL.
 - `custom_id` (string, optional): Custom short URL identifier.
 
 **Response**:
+
 - `url` (object): The newly created URL object.
 
 ## Analytics Tracking
 
 ### Click Tracking
+
 When a user clicks on a shortened URL, the backend will:
+
 1. Record the click in the `clicks` table with the timestamp, location, and referrer.
 2. Redirect the user to the original long URL.
 
 ### Location Tracking
+
 Use an external API (such as IP Geolocation API) to determine the location of the click based on the user's IP address.
 
 ### Referrer Tracking
+
 Capture the `Referer` header from the request to determine the referrer URL.
 
 ## Frontend Design
@@ -157,14 +174,17 @@ Capture the `Referer` header from the request to determine the referrer URL.
 ### Pages
 
 1. **Home Page**
+
    - Contains the URL shortening form (`UrlForm` component).
    - Allows users to shorten URLs with optional custom short links.
 
 2. **URLs Page**
+
    - Displays a list of all shortened URLs.
    - Each URL links to its original long URL.
 
 3. **Analytics Dashboard**
+
    - Displays analytics for a specific shortened URL.
    - Includes a bar chart for click data using `react-chartjs-2`.
 
@@ -174,6 +194,7 @@ Capture the `Referer` header from the request to determine the referrer URL.
 ### Components
 
 1. **UrlForm**
+
    - Handles URL shortening via a GraphQL mutation.
    - Allows users to input a long URL and an optional custom short link.
 
@@ -187,11 +208,3 @@ Capture the `Referer` header from the request to determine the referrer URL.
 - **Charts**: Built with `react-chartjs-2` and `chart.js` for visualizing analytics data.
 - **Routing**: Managed with Next.js dynamic routing for pages like `/analytics/[shortId]`.
 - **Styling**: Global styles defined in `globals.css` and modular styles in `page.module.css`.
-
-## Security Considerations
-
-1. **Input Validation**: Ensure all user inputs are validated to prevent SQL injection and XSS attacks.
-2. **Rate Limiting**: Implement rate limiting to prevent abuse of the URL shortening service.
-3. **HTTPS**: Ensure all communications are encrypted using HTTPS.
-4. **Environment Security**: Secure `.env` files and avoid exposing sensitive information in the codebase.
-5. **Error Handling**: Gracefully handle errors in GraphQL resolvers and provide meaningful error messages.
