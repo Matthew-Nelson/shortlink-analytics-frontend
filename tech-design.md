@@ -7,8 +7,9 @@ The goal of this project is to build a URL Shortener application with analytics 
 
 ### Tech Stack
 - **Frontend**: Next.js
-- **Backend**: Node.js/Express
-- **Database**: PostgreSQL
+- **Backend**: Node.js/Express with Apollo Server (GraphQL)
+- **Database**: PostgreSQL with Sequelize ORM
+- **Environment Management**: dotenv
 
 ## Features
 
@@ -29,6 +30,7 @@ The goal of this project is to build a URL Shortener application with analytics 
            +----------+----------+
            |      API Gateway     |
            |   (Node.js/Express)  |
+           |   (Apollo Server)    |
            +----------+----------+
                       |
                       v
@@ -44,16 +46,27 @@ The goal of this project is to build a URL Shortener application with analytics 
    - **Pages**: Home, URL Shortening Form, Analytics Dashboard
    - **Components**: URL Shortening Form, Analytics Chart, Custom Link Input
 
-2. **Backend (Node.js/Express)**
-   - **Endpoints**:
-     - `POST /shorten`: Shorten a long URL
-     - `GET /:shortId`: Redirect to the long URL and track analytics
-     - `GET /analytics/:shortId`: Get analytics for a short URL
+2. **Backend (Node.js/Express with Apollo Server)**
+   - **GraphQL Schema**:
+     - Queries:
+       - `urls`: Fetch all URLs.
+       - `url(short_id: String!)`: Fetch a single URL by its short ID.
+       - `clicks(url_id: ID!)`: Fetch all clicks for a specific URL.
+     - Mutations:
+       - `shortenUrl(long_url: String!, custom_id: String)`: Shorten a long URL with an optional custom ID.
+   - **Resolvers**:
+     - Map GraphQL queries and mutations to Sequelize models.
+     - Handle database interactions and business logic.
 
-3. **Database (PostgreSQL)**
+3. **Database (PostgreSQL with Sequelize ORM)**
    - **Tables**:
-     - `urls`: Store original URLs and their shortened versions
-     - `clicks`: Store click analytics (timestamp, location, referrer)
+     - `urls`: Store original URLs and their shortened versions.
+     - `clicks`: Store click analytics (timestamp, location, referrer).
+   - **Synchronization**:
+     - Sequelize's `sync` method is used to synchronize the database schema with the models.
+
+4. **Environment Management**
+   - Use `dotenv` to manage environment variables, such as database credentials and server configuration.
 
 ## Database Design
 
@@ -68,6 +81,7 @@ The goal of this project is to build a URL Shortener application with analytics 
 | short_id   | VARCHAR(10)  | Shortened URL identifier      |
 | custom_id  | VARCHAR(10)  | Custom short URL identifier   |
 | created_at | TIMESTAMP    | Timestamp of URL creation     |
+| updated_at | TIMESTAMP    | Timestamp of last update      |
 
 #### `clicks`
 
@@ -78,39 +92,52 @@ The goal of this project is to build a URL Shortener application with analytics 
 | timestamp  | TIMESTAMP    | Timestamp of the click        |
 | location   | VARCHAR(100) | Location of the click         |
 | referrer   | TEXT         | Referrer URL                  |
+| created_at | TIMESTAMP    | Timestamp of record creation  |
+| updated_at | TIMESTAMP    | Timestamp of last update      |
 
 ## API Endpoints
 
-### `POST /shorten`
+### GraphQL Queries
 
-**Description**: Shorten a long URL.
+#### `urls`
+
+**Description**: Fetch all URLs.
+
+**Response**:
+- `urls` (array): List of all URLs.
+
+#### `url(short_id: String!)`
+
+**Description**: Fetch a single URL by its short ID.
+
+**Request Parameters**:
+- `short_id` (string): The shortened URL identifier.
+
+**Response**:
+- `url` (object): The URL object.
+
+#### `clicks(url_id: ID!)`
+
+**Description**: Fetch all clicks for a specific URL.
+
+**Request Parameters**:
+- `url_id` (ID): The ID of the URL.
+
+**Response**:
+- `clicks` (array): List of click analytics.
+
+### GraphQL Mutations
+
+#### `shortenUrl(long_url: String!, custom_id: String)`
+
+**Description**: Shorten a long URL with an optional custom ID.
 
 **Request Parameters**:
 - `long_url` (string): The original long URL.
 - `custom_id` (string, optional): Custom short URL identifier.
 
 **Response**:
-- `short_url` (string): The shortened URL.
-
-### `GET /:shortId`
-
-**Description**: Redirect to the long URL and track analytics.
-
-**Request Parameters**:
-- `shortId` (string): The shortened URL identifier.
-
-**Response**:
-- Redirect to the original long URL.
-
-### `GET /analytics/:shortId`
-
-**Description**: Get analytics for a short URL.
-
-**Request Parameters**:
-- `shortId` (string): The shortened URL identifier.
-
-**Response**:
-- `clicks` (array): List of click analytics.
+- `url` (object): The newly created URL object.
 
 ## Analytics Tracking
 
@@ -130,19 +157,41 @@ Capture the `Referer` header from the request to determine the referrer URL.
 ### Pages
 
 1. **Home Page**
-   - Contains the URL shortening form.
-   - Displays a list of recently shortened URLs.
+   - Contains the URL shortening form (`UrlForm` component).
+   - Allows users to shorten URLs with optional custom short links.
 
-2. **Analytics Dashboard**
+2. **URLs Page**
+   - Displays a list of all shortened URLs.
+   - Each URL links to its original long URL.
+
+3. **Analytics Dashboard**
    - Displays analytics for a specific shortened URL.
-   - Includes charts and graphs for clicks, locations, and referrers.
+   - Includes a bar chart for click data using `react-chartjs-2`.
+
+4. **Analytics Index Page**
+   - Lists all created URLs with links to their respective analytics dashboards.
+
+### Components
+
+1. **UrlForm**
+   - Handles URL shortening via a GraphQL mutation.
+   - Allows users to input a long URL and an optional custom short link.
+
+2. **Analytics Chart**
+   - Displays click data using `react-chartjs-2` and `chart.js`.
+   - Dynamically updates based on the selected short URL.
+
+### Technologies
+
+- **API Calls**: Handled using `axios` for GraphQL queries and mutations.
+- **Charts**: Built with `react-chartjs-2` and `chart.js` for visualizing analytics data.
+- **Routing**: Managed with Next.js dynamic routing for pages like `/analytics/[shortId]`.
+- **Styling**: Global styles defined in `globals.css` and modular styles in `page.module.css`.
 
 ## Security Considerations
 
 1. **Input Validation**: Ensure all user inputs are validated to prevent SQL injection and XSS attacks.
 2. **Rate Limiting**: Implement rate limiting to prevent abuse of the URL shortening service.
 3. **HTTPS**: Ensure all communications are encrypted using HTTPS.
-
-## Conclusion
-
-This tech design document outlines the architecture, database design, API endpoints, and security considerations for the URL Shortener with Analytics application. The project is designed to be small yet impressive, with features that demonstrate full-stack development skills and the ability to handle analytics tracking.
+4. **Environment Security**: Secure `.env` files and avoid exposing sensitive information in the codebase.
+5. **Error Handling**: Gracefully handle errors in GraphQL resolvers and provide meaningful error messages.
